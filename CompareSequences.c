@@ -23,6 +23,8 @@ typedef struct Sequence {
 
 int strToInt(char *str);
 
+void freeSequences(Sequence **seqArr, int seqNum);
+
 Sequence* newSequence();
 
 int loadSequences(const char *filePath, Sequence **seqArr);
@@ -47,7 +49,7 @@ void printTable(char *seq1, char *seq2, int *tbl, int rows, int cols);
 
 /*
  * todo list
- * todo - check that i freed all allocated memory
+ * todo - check that i freed all allocated memory and put NULL in old pointers
  * todo - check that i checked all allocations are not NULL - (int*) a = malloc(...) if (a == NULL)
  * todo - check const in func signature
  * todo - check documentation
@@ -87,8 +89,18 @@ int main(unsigned int argc, char *argv[])
         }
     }
     // todo: make a function to free all the allocated memory
+    freeSequences(seqArr, seqNum);
 
     return 0;
+}
+
+void freeSequences(Sequence **seqArr, int seqNum)
+{
+    for (int i = 0; i < seqNum; i++)
+    {
+        free(seqArr[i]->seqName);
+        free(seqArr[i]->seq);
+    }
 }
 
 int strToInt(char *str)
@@ -263,6 +275,9 @@ void compareSequences(Sequence *seq1, Sequence *seq2, int matchW, int mismatchW,
     initFirstRowCol(compTbl, rows, cols, gapW);
     populateTable(seq1->seq, seq2->seq, compTbl, rows, cols, matchW, mismatchW, gapW);
     printTable(seq1->seq, seq2->seq, compTbl, rows, cols);
+
+    free(compTbl);
+    compTbl = NULL;
 }
 
 void initFirstRowCol(int *tbl, int rows, int cols, int gapW)
@@ -270,12 +285,12 @@ void initFirstRowCol(int *tbl, int rows, int cols, int gapW)
     tbl[0] = 0; // first cell is 0
     for (int i = 1; i < rows; i++) // start from 1 to not overwrite tbl[0][0]
     {
-        tbl[i * cols] = gapW;
+        tbl[i * cols] = i * gapW;
     }
 
     for (int i = 1; i < cols; i++) // start from 1 to not overwrite tbl[0][0]
     {
-        tbl[i] = gapW;
+        tbl[i] = i * gapW;
     }
 }
 
@@ -309,7 +324,7 @@ void printTable(char *seq1, char *seq2, int *tbl, int rows, int cols)
     printf("       ");
     for (int i = 0; i < strlen(seq1); i++)
     {
-        printf(" %c  ", seq1[i]);
+        printf("  %c  ", seq1[i]);
     }
     printf("\n");
 
@@ -328,7 +343,7 @@ void printTable(char *seq1, char *seq2, int *tbl, int rows, int cols)
                     printf("%c ", seq2[i - 1]);
                 }
             }
-            printf(" %02d ", tbl[i * cols + j]);
+            printf(" %03d ", tbl[i * cols + j]);
         }
         printf("\n");
     }

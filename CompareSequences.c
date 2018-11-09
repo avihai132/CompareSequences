@@ -15,10 +15,17 @@
 #define HEADER_LINE_PREFIX '>'
 
 
-typedef struct Sequence {
+typedef struct Sequence
+{
     char *seqName;
     char *seq;
 } Sequence;
+
+typedef struct Cell
+{
+    int row;
+    int col;
+} Cell;
 
 
 int strToInt(char *str);
@@ -43,7 +50,7 @@ void compareSequences(Sequence *seq1, Sequence *seq2, int matchW, int mismatchW,
 void initFirstRowCol(int *tbl, int rows, int cols, int gapW);
 
 void populateTable(const char *seq1, const char *seq2, int *tbl, int rows, int cols, int matchW,
-                   int mismatchW, int gapW);
+                   int mismatchW, int gapW, Cell **path);
 
 void printTable(char *seq1, char *seq2, int *tbl, int rows, int cols);
 
@@ -135,7 +142,7 @@ Sequence* newSequence()
 
 int loadSequences(const char *filePath, Sequence **seqArr)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     char buffer[MAX_LINE_LENGTH] = {0};
     unsigned int curSeqIdx = 0;
     Sequence *curSeq = NULL;
@@ -263,6 +270,7 @@ void compareSequences(Sequence *seq1, Sequence *seq2, int matchW, int mismatchW,
 {
     int cols = strlen(seq1->seq) + 1; // +1 for first empty cols
     int rows = strlen(seq2->seq) + 1; // +1 for first empty rows
+    Cell *path = (Cell*) malloc((cols + rows - 2) * sizeof(Cell));
 
     printf("Comparing %s to %s with M=%d, S=%d, G=%d\n", seq1->seqName, seq2->seqName, matchW, mismatchW, gapW);
     int *compTbl = (int*) calloc((size_t) cols * rows, sizeof(int));
@@ -273,7 +281,7 @@ void compareSequences(Sequence *seq1, Sequence *seq2, int matchW, int mismatchW,
     }
 
     initFirstRowCol(compTbl, rows, cols, gapW);
-    populateTable(seq1->seq, seq2->seq, compTbl, rows, cols, matchW, mismatchW, gapW);
+    populateTable(seq1->seq, seq2->seq, compTbl, rows, cols, matchW, mismatchW, gapW, &path);
     printTable(seq1->seq, seq2->seq, compTbl, rows, cols);
 
     free(compTbl);
@@ -295,13 +303,15 @@ void initFirstRowCol(int *tbl, int rows, int cols, int gapW)
 }
 
 void populateTable(const char *seq1, const char *seq2, int *tbl, int rows, int cols, int matchW,
-                   int mismatchW, int gapW)
+                   int mismatchW, int gapW, Cell **path)
 {
     int cur = 0;
     int curPlusTop = 0;
     int curPlusLeft = 0;
     int curPlusDiag = 0;
     int max = 0;
+    int curPathCell = 0;
+    int firstLoop = 1;
 
     for (int i = 1; i < rows; i++)
     {
@@ -315,6 +325,8 @@ void populateTable(const char *seq1, const char *seq2, int *tbl, int rows, int c
             max = (curPlusTop > curPlusLeft) ? curPlusTop : curPlusLeft;
             max = (max > curPlusDiag) ? max : curPlusDiag;
             tbl[(i * cols) + j] = max;
+
+
         }
     }
 }
